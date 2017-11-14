@@ -33,7 +33,7 @@ gcc -Wall -o server.out daytime-tcp-server-Sanz-Perez.c
 Run server:
 ```bash
 # Inside the container
-./server.out [port-number] # port-number is optional
+./server.out [-p port-number] # port-number is optional
 ```
 
 To run a client, you need to open another terminal in the container:
@@ -42,5 +42,5 @@ docker exec -it ubuntu-daytime-tcp bash
 
 # Inside the container
 cd /home
-./client.out [server.IP.address] [port-number] # server.IP.address is mandatory, port-number is optional
+./client.out [server.IP.address] [-p port-number] # server.IP.address is mandatory, port-number is optional
 ```

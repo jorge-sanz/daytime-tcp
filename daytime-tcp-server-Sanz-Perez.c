@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     /* check if usage of port number argument is correct */
     if (argc == 3 && strncmp(argv[1], "-p", 2) != 0)
     {
-        fprintf(stderr, "usage: %s address.IP.server [-p port-number]\n", argv[0]);
+        fprintf(stderr, "usage: %s [-p port-number]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
