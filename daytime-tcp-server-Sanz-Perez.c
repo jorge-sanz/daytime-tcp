@@ -129,12 +129,6 @@ int main(int argc, char **argv)
         {
             printf("Child created for dealing with client request.\n");
 
-            /* receive message */
-            if (recv(connection, buffer, BUFSIZE, 0) == -1)
-            {
-                error("ERROR in recv");
-            }
-
             /* get server hostname */
             gethostname(hostname, sizeof hostname);
             printf("My hostname: %s\n", hostname);

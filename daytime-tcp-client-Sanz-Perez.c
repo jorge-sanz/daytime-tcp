@@ -80,12 +80,6 @@ int main(int argc, char **argv)
         error("ERROR in connect");
     }
 
-    /* send datagram to server */
-    if (send(s, buffer, BUFSIZE, 0) < 0)
-    {
-        error("ERROR in send");
-    }
-
     /* receive datagram from server */
     if (recv(s, buffer, BUFSIZE, 0) < 0)
     {
