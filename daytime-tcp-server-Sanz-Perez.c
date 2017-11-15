@@ -10,11 +10,13 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define BUFSIZE 1024
+#define BUFSIZE 1024   /* messages buffer size */
+#define LISTEN_QUEUE 8 /* maximum number of client connections */
 
 int s;                /* socket for new connections */
-char buffer[BUFSIZE]; /* messages buffer */
 int connection;       /* socket for client */
+pid_t childpid;       /* process identificator */
+char buffer[BUFSIZE]; /* messages buffer */
 
 /* wrapper for perror */
 void error(char *msg)
@@ -26,34 +28,10 @@ void error(char *msg)
 /* close sockets when a Ctlr+C is received */
 void signal_handler(int signal)
 {
-    int pending;
-
     if (signal == SIGINT)
     {
-
-        /* close input and output connections */
-        if (shutdown(connection, SHUT_RDWR) < 0)
-        {
-            error("ERROR in shutdown");
-        }
-
-        /* receive pending data before closing sockets */
-        do
-        {
-            pending = recv(connection, buffer, BUFSIZE, 0);
-            if (pending == -1)
-            {
-                error("ERROR in recv");
-            }
-        } while (pending > 0);
-
-        printf("CLOSING DAYTIME SERVICE\n");
-
-        /* close connection socket */
-        close(connection);
         /* close client socket */
         close(s);
-
         exit(EXIT_SUCCESS);
     }
 }
@@ -61,7 +39,6 @@ void signal_handler(int signal)
 int main(int argc, char **argv)
 {
     int port;                          /* port to listen on */
-    int s;                             /* socket */
     struct servent *application_name;  /* application (daytime) */
     struct sockaddr_in server_address; /* server structure */
     struct sockaddr_in client_address; /* client structure */
@@ -123,6 +100,14 @@ int main(int argc, char **argv)
         error("ERROR in bind");
     }
 
+    /* listen to new connections. second argument of listen means number of input connections buffer size. */
+    if ((listen(s, LISTEN_QUEUE)) < 0)
+    {
+        error("ERROR in listen");
+    }
+
+    printf("Server running... Waiting for connections.\n");
+
     /* infinite loop. ends with Ctrl+C signal */
     while (1)
     {
@@ -132,12 +117,6 @@ int main(int argc, char **argv)
             error("ERROR in signal");
         }
 
-        /* listen to new connections. second argument of listen means number of input connections buffer size. */
-        if (listen(s, 1) < 0)
-        {
-            error("ERROR");
-        }
-
         /* accept new connection */
         client_length = sizeof(client_address);
         if ((connection = accept(s, (struct sockaddr *)&client_address, &client_length)) < 0)
@@ -145,36 +124,43 @@ int main(int argc, char **argv)
             error("ERROR in accept");
         }
 
-        /* receive message */
-        if (recv(connection, buffer, BUFSIZE, 0) == -1)
+        /* child created for dealing with client request */
+        if ((childpid == fork()) == 0)
         {
-            error("ERROR in recv");
-        }
+            printf("Child created for dealing with client request.\n");
 
-        /* get server hostname */
-        gethostname(hostname, sizeof hostname);
-        printf("My hostname: %s\n", hostname);
+            /* receive message */
+            if (recv(connection, buffer, BUFSIZE, 0) == -1)
+            {
+                error("ERROR in recv");
+            }
 
-        /* get and print current daytime */
-        system("date > /tmp/tt.txt");
-        bzero(buffer, BUFSIZE);
-        file = fopen("/tmp/tt.txt", "r");
-        if (fgets(buffer, BUFSIZE, file) == NULL)
-        {
-            error("ERROR in system(), in fopen(), or in fgets()");
-        }
-        printf("Date: %s", buffer);
+            /* get server hostname */
+            gethostname(hostname, sizeof hostname);
+            printf("My hostname: %s\n", hostname);
 
-        /* concat server name + date */
-        strcpy(response, hostname);
-        strcat(response, ": ");
-        strcat(response, buffer);
-        printf("%s\n", response);
+            /* get and print current daytime */
+            system("date > /tmp/tt.txt");
+            bzero(buffer, BUFSIZE);
+            file = fopen("/tmp/tt.txt", "r");
+            if (fgets(buffer, BUFSIZE, file) == NULL)
+            {
+                error("ERROR in system(), in fopen(), or in fgets()");
+            }
+            printf("Date: %s", buffer);
 
-        /* send response */
-        if (send(connection, response, BUFSIZE, 0) < 0)
-        {
-            error("ERROR in send");
+            /* concat server name + date */
+            strcpy(response, hostname);
+            strcat(response, ": ");
+            strcat(response, buffer);
+            printf("%s\n", response);
+
+            /* send response */
+            if (send(connection, response, BUFSIZE, 0) < 0)
+            {
+                error("ERROR in send");
+            }
+            close(connection);
         }
     }
 }
