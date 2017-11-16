@@ -28,8 +28,20 @@ void error(char *msg)
 /* close sockets when a Ctlr+C is received */
 void signal_handler(int signal)
 {
+    int result;
+
     if (signal == SIGINT)
     {
+        if (shutdown(s, SHUT_RDWR) < 0)
+        {
+            error("ERROR in shutdown\n");
+        }
+
+        if ((result = recv(connection, buffer, BUFSIZE, 0)) == -1)
+        {
+            error("ERROR in recv\n");
+        }
+
         /* close client socket */
         close(s);
         exit(EXIT_SUCCESS);
@@ -125,7 +137,7 @@ int main(int argc, char **argv)
         }
 
         /* child created for dealing with client request */
-        if ((childpid == fork()) == 0)
+        if ((childpid = fork()) == 0)
         {
             printf("Child created for dealing with client request.\n");
 
@@ -154,7 +166,13 @@ int main(int argc, char **argv)
             {
                 error("ERROR in send");
             }
+
+            if (shutdown(connection, SHUT_RDWR) < 0)
+            {
+                error("ERROR in child shutdown");
+            }
             close(connection);
+            exit(0);
         }
     }
 }
