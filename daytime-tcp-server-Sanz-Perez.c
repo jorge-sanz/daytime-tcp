@@ -167,11 +167,13 @@ int main(int argc, char **argv)
                 error("ERROR in send");
             }
 
+            /* shutdown and close child socket */
             if (shutdown(connection, SHUT_RDWR) < 0)
             {
                 error("ERROR in child shutdown");
             }
             close(connection);
+            /* kill child process */
             exit(0);
         }
     }
