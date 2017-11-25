@@ -7,7 +7,7 @@ DAYTIME protocol concurrent server and client using TCP and written in C. Projec
 ## Development
 First, set up the environment:
 ```bash
-git clone https://gitlab.com/jorgesanz/daytime-tcp # Clone repository
+git clone https://github.com/jorge-sanz/daytime-tcp # Clone repository
 cd daytime-tcp # Go to repository folder
 docker run --name=ubuntu-daytime-tcp -it -v $(PWD):/home ubuntu # Run Ubuntu container sharing repository folder
 
